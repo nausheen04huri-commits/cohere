@@ -2,8 +2,8 @@
 #include <HTTPClient.h>
 
 // 1) Enter the Wi-Fi name and password used by your computer.
-const char* WIFI_SSID = "YOUR_WIFI_NAME";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* WIFI_SSID = "Oppo";
+const char* WIFI_PASSWORD = "thufile12";
 
 // 2) Replace 192.168.1.100 with the computer IP printed by cohere_wifi_bridge.py.
 String SERVER_URL = "http://192.168.1.100:8000/api/decision";
