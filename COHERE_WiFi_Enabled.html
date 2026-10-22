@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COHERE | Two-Agent Research Lab</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #070b16;
+  --panel: rgba(17, 25, 45, .78);
+  --border: rgba(148, 163, 184, .15);
+  --text: #edf3ff;
+  --muted: #8795b2;
+  --cyan: #50e5ff;
+  --purple: #a78bfa;
+  --green: #53f0b0;
+  --red: #ff7596;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at 15% 0%, #17264b 0%, transparent 36%),
+    radial-gradient(ellipse at 95% 30%, #211344 0%, transparent 30%),
+    var(--bg);
+  font-family: 'DM Sans', Arial, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(119, 151, 205, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(119, 151, 205, .035) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+button, select, input { font: inherit; }
+
+button, select { cursor: pointer; }
+
+.topbar {
+  height: 76px;
+  padding: 0 5%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7, 11, 22, .72);
+  backdrop-filter: blur(18px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  color: #06101b;
+  font-size: 23px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  box-shadow: 0 0 28px #50e5ff33;
+}
+
+.brand-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-size: 20px;
+}
+
+.brand-sub {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-top: 3px;
+}
+
+.mode-switch { display:flex; gap:8px; align-items:center; }
+.mode-btn { border:1px solid var(--border); background:rgba(17,25,45,.8); color:var(--muted); border-radius:10px; padding:10px 14px; font-weight:700; font-size:12px; }
+.mode-btn.active { color:#06101b; background:linear-gradient(135deg,var(--cyan),var(--purple)); border-color:transparent; }
+.mode-btn:focus-visible, button:focus-visible { outline:2px solid var(--cyan); outline-offset:3px; }
+.mode-panel { display:none; }
+.mode-panel.active { display:block; }
+.esp32-card { border:1px solid var(--border); border-radius:18px; padding:22px; background:var(--panel); }
+.esp32-players { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:18px 0; }
+.esp32-player { border:1px solid var(--border); border-radius:14px; padding:18px; background:#0d172a; text-align:center; }
+.esp32-player strong { display:block; margin-bottom:8px; }
+.connection-pill { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--border); border-radius:99px; padding:8px 12px; color:var(--muted); font-size:12px; }
+@media (max-width: 640px) { .mode-switch { gap:5px; } .mode-btn { padding:8px 10px; } .esp32-players { grid-template-columns:1fr; } }
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.live-pill, .tag {
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 8px 12px;
+  color: #c7d3ed;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.live-dot {
+  display: inline-block;
+  height: 7px;
+  width: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-right: 7px;
+  box-shadow: 0 0 12px var(--green);
+  animation: blink 1.8s infinite;
+}
+
+main {
+  width: min(1220px, 92%);
+  margin: auto;
+  padding: 42px 0 60px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 1.25fr .75fr;
+  gap: 28px;
+  align-items: center;
+  margin-bottom: 35px;
+  animation: rise .7s ease both;
+}
+
+.eyebrow {
+  color: var(--cyan);
+  letter-spacing: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 17px;
+}
+
+h1, h2, h3, p { margin-top: 0; }
+
+h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(38px, 5.4vw, 67px);
+  line-height: 1.02;
+  letter-spacing: -3px;
+  margin-bottom: 20px;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, var(--cyan), #b7a5ff 80%);
+  color: transparent;
+  background-clip: text;
+}
+
+.hero-copy {
+  color: #9caaca;
+  line-height: 1.8;
+  max-width: 560px;
+  font-size: 14px;
+}
+
+.hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.tag { font-size: 10px; }
+
+.lab-visual {
+  position: relative;
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  background: radial-gradient(circle, #1c2b4c 0%, #0c1224 68%);
+}
+
+.orbit {
+  position: absolute;
+  border: 1px solid #50e5ff35;
+  border-radius: 50%;
+  width: 220px;
+  height: 220px;
+  animation: rotate 16s linear infinite;
+}
+
+.orbit.two {
+  width: 160px;
+  height: 160px;
+  border-color: #a78bfa4d;
+  animation-direction: reverse;
+  animation-duration: 12s;
+}
+
+.core {
+  width: 76px;
+  height: 76px;
+  border-radius: 25px;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  color: var(--cyan);
+  border: 1px solid #50e5ff70;
+  background: #10263c;
+  box-shadow: 0 0 50px #50e5ff24;
+  animation: float 4s ease-in-out infinite;
+  z-index: 2;
+}
+
+.orbit-node {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 20px var(--cyan);
+}
+
+.node-a { top: 18%; left: 28%; }
+.node-b { bottom: 20%; right: 22%; background: var(--purple); box-shadow: 0 0 20px var(--purple); }
+.node-c { top: 24%; right: 20%; background: var(--green); box-shadow: 0 0 20px var(--green); }
+
+.visual-label {
+  position: absolute;
+  bottom: 17px;
+  font-size: 10px;
+  color: #8998b8;
+  letter-spacing: 2px;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 14px;
+  margin: 32px 0 16px;
+}
+
+.section-head h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 21px;
+  margin-bottom: 5px;
+}
+
+.section-head p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 0;
+}
+
+.panel {
+  background: linear-gradient(145deg, rgba(21, 31, 54, .92), rgba(12, 18, 34, .92));
+  border: 1px solid var(--border);
+  border-radius: 19px;
+  padding: 23px;
+  box-shadow: 0 15px 45px #00000014;
+  transition: border-color .25s, transform .25s, box-shadow .25s;
+}
+
+.panel:hover {
+  border-color: #50e5ff3d;
+  box-shadow: 0 16px 42px #00000025;
+}
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.agent {
+  position: relative;
+  overflow: hidden;
+  padding: 22px;
+  min-width: 0;
+}
+
+.agent::before {
+  content: "";
+  position: absolute;
+  height: 2px;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--agent-color);
+  box-shadow: 0 0 20px var(--agent-color);
+}
+
+.agent:hover { transform: translateY(-5px); }
+
+.agent-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.robot-scene {
+  width: 96px;
+  height: 104px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  animation: robot-float 2.8s ease-in-out infinite;
+}
+.robot {
+  width: 66px;
+  height: 59px;
+  position: relative;
+  margin-top: 15px;
+  border: 2px solid var(--agent-color);
+  border-radius: 19px 19px 15px 15px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--agent-color) 23%, #18233d), #10182b 75%);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--agent-color) 25%, transparent), inset 0 0 14px color-mix(in srgb, var(--agent-color) 8%, transparent);
+}
+.robot::before, .robot::after {
+  content: "";
+  position: absolute;
+  top: 20px;
+  width: 6px;
+  height: 17px;
+  border: 2px solid var(--agent-color);
+  background: color-mix(in srgb, var(--agent-color) 15%, #10182b);
+  border-radius: 5px;
+}
+.robot::before { left: -9px; }
+.robot::after { right: -9px; }
+.robot-antenna {
+  position: absolute;
+  width: 3px;
+  height: 15px;
+  left: 31px;
+  top: -17px;
+  border-radius: 3px;
+  background: var(--agent-color);
+}
+.robot-antenna::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  left: -3px;
+  top: -5px;
+  background: var(--agent-color);
+  box-shadow: 0 0 12px var(--agent-color);
+  animation: antenna-pulse 1.5s ease-in-out infinite;
+}
+.robot-eyes {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 17px;
+}
+.robot-eye {
+  width: 8px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--agent-color);
+  box-shadow: 0 0 9px var(--agent-color);
+  animation: robot-blink 4s infinite;
+}
+.robot-mouth {
+  width: 20px;
+  height: 5px;
+  margin: 8px auto 0;
+  border: 1px solid var(--agent-color);
+  border-radius: 0 0 7px 7px;
+  border-top: 0;
+  opacity: .9;
+}
+.robot-base {
+  position: absolute;
+  bottom: 4px;
+  width: 45px;
+  height: 5px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--agent-color) 25%, transparent);
+  filter: blur(3px);
+}
+@keyframes robot-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes antenna-pulse { 0%, 100% { opacity: .65; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.15); } }
+@keyframes robot-blink { 0%, 44%, 48%, 100% { transform: scaleY(1); } 46% { transform: scaleY(.12); } }
+@media (prefers-reduced-motion: reduce) { .robot-scene, .robot-eye, .robot-antenna::after { animation: none; } }
+
+.status {
+  font-size: 10px;
+  color: var(--green);
+  letter-spacing: 1px;
+}
+
+.agent h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  margin-bottom: 7px;
+}
+
+.agent p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  min-height: 42px;
+  margin-bottom: 18px;
+}
+
+.strategy-label {
+  display: inline-block;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: #ffffff08;
+  color: var(--agent-color);
+  font-size: 10px;
+  letter-spacing: .5px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.field label {
+  display: block;
+  color: #aebbd4;
+  font-size: 12px;
+  margin-bottom: 9px;
+}
+
+select, input {
+  width: 100%;
+  background: #0a1020;
+  color: var(--text);
+  border: 1px solid #303e5b;
+  border-radius: 10px;
+  padding: 13px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+select:focus, input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px #50e5ff14;
+}
+
+.hint {
+  color: #6f7f9f;
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 20px;
+  color: var(--text);
+  background: #ffffff08;
+  font-weight: 600;
+  transition: transform .2s, filter .2s;
+}
+
+.btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
+
+.btn-primary {
+  flex: 1;
+  color: #07111d;
+  background: linear-gradient(100deg, var(--cyan), #9e9aff);
+  border: none;
+  box-shadow: 0 5px 25px #50e5ff20;
+}
+
+.btn-primary span { margin-right: 8px; }
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.metric {
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.metric::after {
+  content: "";
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: var(--metric-color);
+  opacity: .08;
+  filter: blur(15px);
+  right: -30px;
+  top: -30px;
+}
+
+.metric-label {
+  color: #94a3c1;
+  font-size: 11px;
+  margin-bottom: 15px;
+}
+
+.metric-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 29px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.metric-note {
+  color: #7383a3;
+  font-size: 10px;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap: 18px;
+}
+
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+th {
+  text-align: left;
+  color: #8191b0;
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+th, td {
+  padding: 14px 10px;
+  border-bottom: 1px solid #ffffff0c;
+}
+
+td { color: #d7e0f4; }
+
+.empty {
+  color: #7584a2;
+  font-size: 12px;
+  line-height: 1.8;
+  text-align: center;
+  padding: 28px 12px;
+}
+
+.chart-placeholder {
+  height: 155px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #34415d;
+  border-radius: 12px;
+  background: #080e1b70;
+}
+
+.chart-placeholder p {
+  max-width: 230px;
+  text-align: center;
+  color: #7f8eab;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.footer {
+  text-align: center;
+  border-top: 1px solid var(--border);
+  padding: 25px 12px;
+  color: #697996;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rotate {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@media (max-width: 850px) {
+  .hero { grid-template-columns: 1fr; }
+  .lab-visual { min-height: 230px; }
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+  .results-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .topbar { padding: 0 4%; height: 68px; }
+  .brand-name { font-size: 17px; }
+  .brand-sub { font-size: 8px; }
+  .live-pill { font-size: 9px; padding: 7px; }
+  main { width: 92%; padding-top: 28px; }
+  h1 { letter-spacing: -1.8px; }
+  .agent-grid, .settings-grid { grid-template-columns: 1fr; }
+  .agent p { min-height: 0; }
+  .panel { padding: 17px; }
+  .section-head { align-items: start; flex-direction: column; }
+  .actions { flex-direction: column; }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">C</div>
+    <div>
+      <div class="brand-name">COHERE<span style="color:#50e5ff">.</span></div>
+      <div class="brand-sub">MULTI-AGENT RESEARCH LAB</div>
+    </div>
+  </div>
+
+  <div class="top-right">
+    <nav class="mode-switch" aria-label="Project mode">
+      <button class="mode-btn active" id="demoModeBtn" type="button" aria-pressed="true">▶ Demo</button>
+      <button class="mode-btn" id="esp32ModeBtn" type="button" aria-pressed="false">⌁ ESP32 Mode</button>
+    </nav>
+    <div class="live-pill">
+      <span class="live-dot"></span>LOCAL SYSTEM
+    </div>
+  </div>
+</header>
+
+<main id="demoPanel" class="mode-panel active">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">IQTITANS / RA047 / RESEARCH PROTOTYPE</div>
+      <h1>Can agents<br>learn to <span class="gradient-text">cooperate?</span></h1>
+      <p class="hero-copy">
+        Explore the science of cooperation through repeated interactions.
+        Configure agent strategies, experiment with uncertainty, and investigate
+        when mutual cooperation persists or breaks down.
+      </p>
+      <div class="hero-tags">
+        <span class="tag">01 / GAME THEORY</span>
+        <span class="tag">02 / MULTI-AGENT SYSTEMS</span>
+        <span class="tag">03 / BEHAVIOURAL ANALYSIS</span>
+      </div>
+    </div>
+
+    <div class="lab-visual">
+      <div class="orbit">
+        <span class="orbit-node node-a"></span>
+        <span class="orbit-node node-b"></span>
+      </div>
+      <div class="orbit two">
+        <span class="orbit-node node-c"></span>
+      </div>
+      <div class="core">⌘</div>
+      <div class="visual-label">AGENT NETWORK / READY</div>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>01 / Agent Network</h2>
+      <p>Two agents. One cooperation dilemma.</p>
+    </div>
+    <span class="tag">2 AGENTS CONFIGURED</span>
+  </div>
+
+  <section class="agent-grid">
+    <article class="panel agent" style="--agent-color:#50e5ff">
+      <div class="agent-top">
+        <div class="robot-scene" role="img" aria-label="Animated cyan research robot">
+          <div class="robot-base"></div>
+          <div class="robot"><span class="robot-antenna"></span><div class="robot-eyes"><span class="robot-eye"></span><span class="robot-eye"></span></div><div class="robot-mouth"></div></div>
+        </div>
+        <span class="status">● READY</span>
+      </div>
+      <h3>Agent Alpha</h3>
+      <p>Usually cooperates (75% probability), but sometimes defects to create varied outcomes.</p>
+      <span class="strategy-label">75% COOPERATE</span>
+    </article>
+
+    <article class="panel agent" style="--agent-color:#ff7596">
+      <div class="agent-top">
+        <div class="robot-scene" role="img" aria-label="Animated pink research robot">
+          <div class="robot-base"></div>
+          <div class="robot"><span class="robot-antenna"></span><div class="robot-eyes"><span class="robot-eye"></span><span class="robot-eye"></span></div><div class="robot-mouth"></div></div>
+        </div>
+        <span class="status">● READY</span>
+      </div>
+      <h3>Agent Beta</h3>
+      <p>Usually defects (65% probability), but sometimes cooperates.</p>
+      <span class="strategy-label">65% DEFECT</span>
+    </article>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>02 / Experiment Configuration</h2>
+      <p>Control the environment before running a simulation.</p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="settings-grid">
+      <div class="field">
+        <label for="rounds">ITERATION COUNT</label>
+        <select id="rounds">
+          <option value="1">01 / Single round</option>
+          <option value="10" selected>10 / Standard trial</option>
+          <option value="50">50 / Extended trial</option>
+          <option value="100">100 / Long trial</option>
+        </select>
+        <div class="hint">Number of rounds per experiment.</div>
+      </div>
+
+      <div class="field">
+        <label for="noise">ENVIRONMENTAL NOISE</label>
+        <select id="noise">
+          <option value="0">0% / Perfect conditions</option>
+          <option value="10">10% / Low uncertainty</option>
+          <option value="50">50% / High uncertainty</option>
+          <option value="100">100% / Extreme edge case</option>
+        </select>
+        <div class="hint">Probability that an action gets flipped.</div>
+      </div>
+
+      <div class="field">
+        <label for="reward">REWARD MODEL</label>
+        <select id="reward">
+          <option value="standard">Standard / Balanced baseline</option>
+          <option value="cooperation">Cooperation incentive</option>
+          <option value="temptation">Defection incentive</option>
+        </select>
+        <div class="hint">Compare how incentives affect outcomes.</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="runButton">
+        <span>▶</span> Run Simulation
+      </button>
+      <button class="btn" id="resetButton">↺ Reset Experiment</button>
+    </div>
+    <p id="status" class="hint">System ready. Demo will start automatically when this page loads.</p>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>03 / Performance Overview</h2>
+      <p>Quantitative indicators from the latest experiment.</p>
+    </div>
+    <span class="tag">LIVE ANALYTICS</span>
+  </div>
+
+  <section class="metrics">
+    <div class="panel metric" style="--metric-color:#50e5ff">
+      <div class="metric-label">COOPERATION RATE</div>
+      <div class="metric-value" id="cooperation">--</div>
+      <div class="metric-note">Of all agent actions</div>
+    </div>
+    <div class="panel metric" style="--metric-color:#a78bfa">
+      <div class="metric-label">GROUP PAYOFF</div>
+      <div class="metric-value" id="groupPayoff">--</div>
+      <div class="metric-note">Combined agent rewards</div>
+    </div>
+    <div class="panel metric" style="--metric-color:#53f0b0">
+      <div class="metric-label">ROUNDS COMPLETED</div>
+      <div class="metric-value" id="completedRounds">--</div>
+      <div class="metric-note">In the latest trial</div>
+    </div>
+    <div class="panel metric" style="--metric-color:#ff7596">
+      <div class="metric-label">EXPERIMENTS RUN</div>
+      <div class="metric-value" id="runs">0</div>
+      <div class="metric-note">Session total</div>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>04 / Evidence & Outcomes</h2>
+      <p>Inspect individual performance and interaction history.</p>
+    </div>
+  </div>
+
+  <section class="results-grid">
+    <div class="panel">
+      <h3>Individual Agent Payoff</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>AGENT</th>
+              <th>STRATEGY</th>
+              <th>COOPERATIONS</th>
+              <th>PAYOFF</th>
+            </tr>
+          </thead>
+          <tbody id="agentResults">
+            <tr>
+              <td colspan="4" class="empty">Run the simulation to populate the results.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Cooperation Analysis</h3>
+      <div id="chart" class="chart-placeholder">
+        <p>Cooperation by round will appear here automatically.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>05 / Interaction Log</h2>
+      <p>Round-by-round decisions and outcomes.</p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ROUND</th>
+            <th>PAIR</th>
+            <th>INTENDED (A/B)</th>
+            <th>ACTUAL (A/B)</th>
+            <th>PAIR PAYOFF</th>
+          </tr>
+        </thead>
+        <tbody id="history">
+          <tr>
+            <td colspan="5" class="empty">No interactions recorded yet. Your experiment history will appear here.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>06 / Experimental Interpretation</h2>
+      <p>Summarise what the evidence means, including limitations.</p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <p id="summary" class="hero-copy" style="margin:0">
+      The demo will automatically analyse cooperation, rewards and environmental noise after loading.
+    </p>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>07 / Validation & Multi-Condition Tests</h2>
+      <p>Repeatable tests across normal, noisy, and edge-case conditions.</p>
+    </div>
+  </div>
+  <section class="panel">
+    <h3>Payoff rule validation</h3>
+    <p id="validationResult" class="hero-copy" style="margin:0">Validation will run with the next experiment.</p>
+    <div class="table-wrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th>TEST CASE</th><th>NOISE</th><th>STRATEGY AVG COOPERATION</th><th>STRATEGY AVG GROUP PAYOFF</th><th>ALL-DEFECT BASELINE PAYOFF</th><th>PAYOFF DIFFERENCE</th></tr></thead>
+        <tbody id="caseResults"><tr><td colspan="6" class="empty">Run the simulation to generate results for all three test cases.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>08 / Three-Strategy Comparison</h2>
+      <p>Compare three strategy types while keeping the two-agent model.</p>
+    </div>
+  </div>
+  <section class="panel">
+    <p class="hint">The two visible agents are retained. This comparison runs separate two-agent matchups: the current probabilistic strategies, Always Cooperate vs Always Defect, and Tit-for-Tat vs Always Defect.</p>
+    <div class="table-wrap" style="margin-top:14px">
+      <table>
+        <thead><tr><th>STRATEGY MATCHUP</th><th>AVG COOPERATION</th><th>AVG GROUP PAYOFF</th><th>BASELINE PAYOFF</th><th>PAYOFF VS BASELINE</th></tr></thead>
+        <tbody id="strategyResults"><tr><td colspan="5" class="empty">Run the simulation to compare strategy types over repeated seeded trials.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="section-head">
+    <div>
+      <h2>09 / Failures, Limitations & What Could Change the Conclusion</h2>
+      <p>Record caveats instead of treating a single result as universal.</p>
+    </div>
+  </div>
+  <section class="panel">
+    <div id="limitationsReport" class="hero-copy" style="margin:0">
+      Run the experiment to populate the validation report. Results are limited to the selected payoff model, strategy rules, round count, and noise settings.
+    </div>
+    <ul style="margin:14px 0 0;padding-left:22px;color:var(--muted);line-height:1.7">
+      <li><strong>Potential failures to watch:</strong> invalid payoff ordering, zero rounds, missing history rows, or a result that changes substantially across noise conditions.</li>
+      <li><strong>Limitations:</strong> only two agents interact; strategies are simplified; the payoff values are chosen by the model; 100 seeded trials are useful but do not prove universal behaviour.</li>
+      <li><strong>What could change the conclusion:</strong> more seeds, different payoff matrices, more rounds, additional strategy types, or independent validation against a hand-calculated example.</li>
+    </ul>
+  </section>
+</main>
+
+<main id="esp32Panel" class="mode-panel">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">COHERE / HARDWARE INTERFACE</div>
+      <h1>Two players.<br><span class="gradient-text">Real decisions.</span></h1>
+      <p class="hero-copy">ESP32 Mode will let two players submit Cooperate or Defect using four physical buttons. This screen is a setup preview; live hardware data will appear after the ESP32 firmware and Wi-Fi connection are configured.</p>
+      <div class="hero-tags"><span class="tag">2 PLAYERS</span><span class="tag">4 BUTTONS</span><span class="tag">LOCAL WI-FI</span></div>
+    </div>
+    <div class="lab-visual"><div class="orbit"><span class="orbit-node node-a"></span><span class="orbit-node node-b"></span></div><div class="orbit two"><span class="orbit-node node-c"></span></div><div class="core">⌁</div><div class="visual-label">ESP32 / WAITING FOR CONNECTION</div></div>
+  </section>
+  <section class="esp32-card">
+    <div class="section-head"><div><h2>Hardware connection</h2><p>Connect the ESP32 and your browser to the same Wi-Fi network.</p></div><span class="connection-pill"><span class="live-dot" style="background:#ff7596;box-shadow:0 0 12px #ff7596"></span>NOT CONNECTED</span></div>
+    <div class="esp32-players">
+      <div class="esp32-player"><strong style="color:var(--cyan)">PLAYER A</strong><span>🟢 Cooperate</span><br><span>🔴 Defect</span></div>
+      <div class="esp32-player"><strong style="color:var(--purple)">PLAYER B</strong><span>🟢 Cooperate</span><br><span>🔴 Defect</span></div>
+    </div>
+    <div class="esp32-card" style="margin-top:16px">
+      <div class="section-head"><div><h2>Live hardware results</h2><p>When the local Wi-Fi bridge is running, button selections and completed rounds appear here.</p></div><span id="wifiBridgeStatus" class="connection-pill"><span class="live-dot" style="background:#ffbd59;box-shadow:0 0 12px #ffbd59"></span>CHECKING BRIDGE</span></div>
+      <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>ROUND</th><th>ALPHA</th><th>BETA</th><th>ALPHA PAYOFF</th><th>BETA PAYOFF</th></tr></thead><tbody id="hardwareRounds"><tr><td colspan="5" class="empty">Waiting for the first hardware round.</td></tr></tbody></table></div>
+      <p id="hardwareCurrentChoices" class="hero-copy" style="margin:12px 0 0">No button selections received yet.</p>
+      <p class="hint" style="margin-top:8px">To use live hardware mode, open this page through the local server address shown by the Python bridge, not by double-clicking the HTML file.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  COHERE RESEARCH LAB · IQTITANS RA047 · MULTI-AGENT GAME SIMULATION
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const AGENTS = [
+  { id: "A", name: "Agent Alpha", strategy: "75% Cooperate" },
+  { id: "B", name: "Agent Beta", strategy: "65% Defect" }
+];
+
+const PAIRS = [
+  ["A", "B"]
+];
+
+let experimentsRun = 0;
+let isRunning = false;
+let activeTimer = null;
+
+function sleep(ms) {
+  return new Promise(resolve => {
+    activeTimer = setTimeout(resolve, ms);
+  });
+}
+
+function seededRandom(seed) {
+  let value = seed >>> 0;
+  return function () {
+    value = (value + 0x6D2B79F5) >>> 0;
+    let t = value;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function getPayoffs(model, a, b) {
+  let R = 3, T = 5, P = 1, S = 0;
+
+  if (model === "cooperation") {
+    R = 5; T = 6; P = 2; S = 0;
+  } else if (model === "temptation") {
+    R = 2; T = 7; P = 1; S = 0;
+  }
+
+  if (a === "C" && b === "C") return [R, R];
+  if (a === "C" && b === "D") return [S, T];
+  if (a === "D" && b === "C") return [T, S];
+  return [P, P];
+}
+
+function createState(seed, rounds, noise, model, strategies) {
+  return {
+    random: seededRandom(seed),
+    rounds,
+    noise,
+    model,
+    strategies,
+    scores: { A: 0, B: 0 },
+    actions: { A: 0, B: 0 },
+    cooperations: 0,
+    decisions: 0,
+    log: [],
+    roundRates: [],
+    pairMemory: {}
+  };
+}
+
+function intendedAction(state, agentId, opponentId, pairKey) {
+  const strategy = state.strategies[agentId];
+  if (strategy === "75% Cooperate / 25% Defect") {
+    return state.random() < 0.75 ? "C" : "D";
+  }
+  if (strategy === "65% Defect / 35% Cooperate") {
+    return state.random() < 0.65 ? "D" : "C";
+  }
+  if (strategy === "Always Cooperate") return "C";
+  if (strategy === "Always Defect") return "D";
+  if (strategy === "Tit-for-Tat") {
+    const memory = state.pairMemory[pairKey] || {};
+    return memory[opponentId] || "C";
+  }
+  return "C";
+}
+
+function playMatch(state, pair, round) {
+  const [a, b] = pair;
+  const pairKey = [a, b].sort().join("-");
+  const memory = state.pairMemory[pairKey] || {};
+
+  const intendedA = intendedAction(state, a, b, pairKey);
+  const intendedB = intendedAction(state, b, a, pairKey);
+
+  const actualA =
+    state.random() < state.noise ? flip(intendedA) : intendedA;
+  const actualB =
+    state.random() < state.noise ? flip(intendedB) : intendedB;
+
+  const [payA, payB] = getPayoffs(state.model, actualA, actualB);
+
+  state.scores[a] += payA;
+  state.scores[b] += payB;
+  state.actions[a]++;
+  state.actions[b]++;
+  state.decisions += 2;
+
+  if (actualA === "C") state.cooperations++;
+  if (actualB === "C") state.cooperations++;
+
+  state.pairMemory[pairKey] = {
+    [a]: actualA,
+    [b]: actualB
+  };
+
+  const item = {
+    round, a, b, intendedA, intendedB,
+    actualA, actualB, payA, payB
+  };
+
+  state.log.push(item);
+  return item;
+}
+
+function flip(action) {
+  return action === "C" ? "D" : "C";
+}
+
+function cooperationRate(state) {
+  return state.decisions
+    ? 100 * state.cooperations / state.decisions
+    : 0;
+}
+
+function groupPayoff(state) {
+  return Object.values(state.scores).reduce((sum, value) => sum + value, 0);
+}
+
+function simulateInstant(seed, rounds, noise, model, strategies) {
+  const state = createState(seed, rounds, noise, model, strategies);
+
+  for (let r = 1; r <= rounds; r++) {
+    let roundCooperations = 0;
+    let roundDecisions = 0;
+
+    for (const pair of PAIRS) {
+      const item = playMatch(state, pair, r);
+      roundCooperations += (item.actualA === "C" ? 1 : 0);
+      roundCooperations += (item.actualB === "C" ? 1 : 0);
+      roundDecisions += 2;
+    }
+
+    state.roundRates.push(100 * roundCooperations / roundDecisions);
+  }
+
+  return state;
+}
+
+function renderAgentResults(state) {
+  const body = $("agentResults");
+  if (!body) return;
+
+  body.innerHTML = AGENTS.map(agent => {
+    const score = state.scores[agent.id] || 0;
+    const actions = state.actions[agent.id] || 0;
+
+    return `<tr>
+      <td>${agent.name}</td>
+      <td>${state.strategies[agent.id]}</td>
+      <td>${state.log.reduce((n, item) => n + ((item.a === agent.id && item.actualA === "C") || (item.b === agent.id && item.actualB === "C") ? 1 : 0), 0)}</td>
+      <td>${score}</td>
+    </tr>`;
+  }).join("");
+}
+
+function renderHistory(state) {
+  const body = $("history");
+  if (!body) return;
+
+  body.innerHTML = state.log.slice().reverse().map(item => {
+    const intended = `${item.intendedA}/${item.intendedB}`;
+    const actual = `${item.actualA}/${item.actualB}`;
+    const changed =
+      item.intendedA !== item.actualA ||
+      item.intendedB !== item.actualB;
+
+    return `<tr>
+      <td>${item.round}</td>
+      <td>${item.a} vs ${item.b}</td>
+      <td>${intended}</td>
+      <td>${actual}${changed ? " ⚡" : ""}</td>
+      <td>${item.payA} / ${item.payB}</td>
+    </tr>`;
+  }).join("");
+}
+
+function renderChart(rates, previewRate = null) {
+  const el = $("chart");
+  if (!el) return;
+
+  const values = rates.slice();
+  if (previewRate !== null) values.push(previewRate);
+
+  if (!values.length) {
+    el.className = "chart-placeholder";
+    el.innerHTML = "Your cooperation chart will appear here";
+    el.style.height = "";
+    return;
+  }
+
+  const width = 600, height = 190;
+  const left = 36, right = 12, top = 12, bottom = 28;
+  const plotW = width - left - right;
+  const plotH = height - top - bottom;
+  const slot = plotW / Math.max(values.length, 1);
+  const barW = Math.max(2, Math.min(22, slot * 0.62));
+
+  const bars = values.map((v, i) => {
+    const h = Math.max(1, plotH * v / 100);
+    const x = left + i * slot + (slot - barW) / 2;
+    const y = top + plotH - h;
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${h}"
+      rx="2" fill="#36d6e7" opacity="${i === values.length - 1 ? 1 : 0.72}">
+      <title>Round ${i + 1}: ${v.toFixed(1)}% cooperation</title>
+    </rect>`;
+  }).join("");
+
+  el.className = "";
+  el.style.height = "auto";
+  el.innerHTML = `<svg viewBox="0 0 ${width} ${height}"
+      width="100%" role="img" aria-label="Cooperation rate by round">
+    <line x1="${left}" y1="${top}" x2="${left}" y2="${top + plotH}"
+      stroke="#64748b" stroke-opacity=".5"/>
+    <line x1="${left}" y1="${top + plotH}" x2="${width - right}"
+      y2="${top + plotH}" stroke="#64748b" stroke-opacity=".5"/>
+    <text x="5" y="${top + 4}" fill="currentColor" font-size="10">100%</text>
+    <text x="13" y="${top + plotH / 2 + 4}" fill="currentColor" font-size="10">50%</text>
+    <text x="23" y="${top + plotH + 4}" fill="currentColor" font-size="10">0</text>
+    ${bars}
+    <text x="${width / 2}" y="${height - 3}" text-anchor="middle"
+      fill="currentColor" font-size="11">Round number</text>
+  </svg>`;
+}
+
+function updateMetrics(state, round, totalRounds) {
+  if ($("cooperation")) {
+    $("cooperation").textContent = cooperationRate(state).toFixed(1) + "%";
+  }
+  if ($("groupPayoff")) {
+    $("groupPayoff").textContent = groupPayoff(state).toFixed(0);
+  }
+  if ($("completedRounds")) {
+    $("completedRounds").textContent = `${round} / ${totalRounds}`;
+  }
+
+  renderAgentResults(state);
+  renderHistory(state);
+}
+
+function getSettings() {
+  return {
+    rounds: Math.max(1, Number($("rounds")?.value || 10)),
+    noise: Math.max(0, Math.min(1, Number($("noise")?.value || 0) / 100)),
+    model: $("reward")?.value || "standard"
+  };
+}
+
+function getMainStrategies() {
+  return {
+    A: "75% Cooperate / 25% Defect",
+    B: "65% Defect / 35% Cooperate"
+  };
+}
+
+function getDefectStrategies() {
+  return {
+    A: "Always Defect",
+    B: "Always Defect"
+  };
+}
+
+function setStatus(message) {
+  if ($("status")) $("status").textContent = message;
+}
+
+function validatePayoffs() {
+  const cc = getPayoffs("standard", "C", "C");
+  const cd = getPayoffs("standard", "C", "D");
+  const dc = getPayoffs("standard", "D", "C");
+  const dd = getPayoffs("standard", "D", "D");
+  const expected = JSON.stringify(cc) === JSON.stringify([3, 3]) &&
+    JSON.stringify(cd) === JSON.stringify([0, 5]) &&
+    JSON.stringify(dc) === JSON.stringify([5, 0]) &&
+    JSON.stringify(dd) === JSON.stringify([1, 1]);
+  const pdOrdering = 5 > 3 && 3 > 1 && 1 > 0;
+  return { passed: expected && pdOrdering, cc, cd, dc, dd };
+}
+
+function runRepeatedSummary(strategies, rounds, noise, model, startSeed = 1, count = 100) {
+  let cooperation = 0, payoff = 0, baselinePayoff = 0;
+  const baselineStrategies = { A: "Always Defect", B: "Always Defect" };
+  for (let seed = startSeed; seed < startSeed + count; seed++) {
+    const trial = simulateInstant(seed, rounds, noise, model, strategies);
+    const baseline = simulateInstant(seed, rounds, noise, model, baselineStrategies);
+    cooperation += cooperationRate(trial);
+    payoff += groupPayoff(trial);
+    baselinePayoff += groupPayoff(baseline);
+  }
+  return {
+    cooperation: cooperation / count,
+    payoff: payoff / count,
+    baselinePayoff: baselinePayoff / count,
+    difference: (payoff - baselinePayoff) / count
+  };
+}
+
+function renderValidationReports(settings) {
+  const validation = validatePayoffs();
+  const validationEl = $("validationResult");
+  if (validationEl) {
+    validationEl.textContent = validation.passed
+      ? "PASS — all four standard payoff outcomes match the expected rules: CC = 3/3, CD = 0/5, DC = 5/0, DD = 1/1. The Prisoner’s Dilemma ordering T > R > P > S is also satisfied."
+      : "FAIL — one or more standard payoff checks did not match the expected values. Do not interpret the experiment until the payoff rules are corrected.";
+    validationEl.style.color = validation.passed ? "var(--green)" : "var(--pink)";
+  }
+
+  const cases = [
+    { name: "Case 1 — Normal", noise: 0 },
+    { name: "Case 2 — Noisy", noise: 0.5 },
+    { name: "Case 3 — Edge case", noise: 1 }
+  ];
+  const caseSummaries = cases.map((testCase, index) => ({
+    ...testCase,
+    result: runRepeatedSummary(getMainStrategies(), settings.rounds, testCase.noise, settings.model, 2001 + index * 100, 100)
+  }));
+  const caseRows = caseSummaries.map(({ name, noise, result }) =>
+    `<tr><td>${name}</td><td>${Math.round(noise * 100)}%</td><td>${result.cooperation.toFixed(1)}%</td><td>${result.payoff.toFixed(2)}</td><td>${result.baselinePayoff.toFixed(2)}</td><td>${result.difference.toFixed(2)}</td></tr>`
+  ).join("");
+  if ($("caseResults")) $("caseResults").innerHTML = caseRows;
+
+  const comparisons = [
+    { name: "Current probabilistic pair", strategies: getMainStrategies() },
+    { name: "Always Cooperate vs Always Defect", strategies: { A: "Always Cooperate", B: "Always Defect" } },
+    { name: "Tit-for-Tat vs Always Defect", strategies: { A: "Tit-for-Tat", B: "Always Defect" } }
+  ];
+  const comparisonSummaries = comparisons.map((item, index) => ({
+    ...item,
+    result: runRepeatedSummary(item.strategies, settings.rounds, settings.noise, settings.model, 4001 + index * 100, 100)
+  }));
+  const comparisonRows = comparisonSummaries.map(({ name, result }) =>
+    `<tr><td>${name}</td><td>${result.cooperation.toFixed(1)}%</td><td>${result.payoff.toFixed(2)}</td><td>${result.baselinePayoff.toFixed(2)}</td><td>${result.difference.toFixed(2)}</td></tr>`
+  ).join("");
+  if ($("strategyResults")) $("strategyResults").innerHTML = comparisonRows;
+
+  const highestCoop = caseSummaries.reduce((best, item) => item.result.cooperation > best.result.cooperation ? item : best, caseSummaries[0]);
+  const lowestCoop = caseSummaries.reduce((worst, item) => item.result.cooperation < worst.result.cooperation ? item : worst, caseSummaries[0]);
+  const positiveCases = caseSummaries.filter(item => item.result.difference > 0).length;
+  const negativeCases = caseSummaries.filter(item => item.result.difference < 0).length;
+  const report = $("limitationsReport");
+  if (report) {
+    report.textContent = (validation.passed ? "Payoff validation passed. " : "Payoff validation failed. Results should not be trusted until fixed. ") +
+      `Across the three noise tests, the highest observed cooperation was ${highestCoop.result.cooperation.toFixed(1)}% in ${highestCoop.name.toLowerCase()}, while the lowest was ${lowestCoop.result.cooperation.toFixed(1)}% in ${lowestCoop.name.toLowerCase()}. ` +
+      `The configured pair beat the all-Defect baseline in group payoff in ${positiveCases} of 3 conditions and scored below it in ${negativeCases} of 3 conditions (ties are neither). ` +
+      "The 100% noise case is an edge case: every intended action is flipped, so intended strategy behaviour is fully overridden. " +
+      "These are observations from 100 seeded trials per condition, not proof that the same result holds for every seed or payoff system. No runtime error detector or independent external benchmark is included. " +
+      "What could change the conclusion: more seeds, a different payoff matrix, more rounds, additional strategies, or a hand-calculated independent check.";
+  }
+}
+
+async function runExperiment() {
+  if (isRunning) return;
+  isRunning = true;
+
+  const runButton = $("runButton");
+  if (runButton) runButton.disabled = true;
+
+  const settings = getSettings();
+  const strategies = getMainStrategies();
+  const state = createState(
+    9000 + experimentsRun,
+    settings.rounds,
+    settings.noise,
+    settings.model,
+    strategies
+  );
+
+  if ($("summary")) {
+    $("summary").textContent = "Simulation in progress. Watch the decisions and payoffs update.";
+  }
+  if ($("runs")) $("runs").textContent = "Running...";
+  if ($("history")) $("history").innerHTML = "";
+  renderChart([]);
+
+  setStatus("Step 1/4 — Initializing two agents...");
+  await sleep(280);
+
+  if (!isRunning) return;
+
+  setStatus("Step 2/4 — Strategies loaded. Starting repeated interactions...");
+  await sleep(280);
+
+  for (let round = 1; round <= settings.rounds; round++) {
+    if (!isRunning) return;
+
+    setStatus(`Round ${round}/${settings.rounds} — Preparing pairwise matches...`);
+    await sleep(280);
+
+    let roundCooperations = 0;
+    let roundDecisions = 0;
+
+    for (const pair of PAIRS) {
+      if (!isRunning) return;
+
+      setStatus(
+        `Round ${round}/${settings.rounds} — ${pair[0]} vs ${pair[1]}: revealing decisions...`
+      );
+
+      await sleep(280);
+      if (!isRunning) return;
+
+      const item = playMatch(state, pair, round);
+
+      roundCooperations +=
+        (item.actualA === "C" ? 1 : 0) +
+        (item.actualB === "C" ? 1 : 0);
+      roundDecisions += 2;
+
+      const noiseMessage =
+        item.intendedA !== item.actualA || item.intendedB !== item.actualB
+          ? " Noise changed at least one intended action."
+          : " No action was changed by noise.";
+
+      setStatus(
+        `Round ${round}/${settings.rounds} — ${pair[0]} chose ${item.actualA}, ` +
+        `${pair[1]} chose ${item.actualB}. Payoffs: ${item.payA} and ${item.payB}.` +
+        noiseMessage
+      );
+
+      // Show live values after each pair, not only at the end.
+      updateMetrics(state, round, settings.rounds);
+      renderChart(
+        state.roundRates,
+        100 * roundCooperations / roundDecisions
+      );
+
+      await sleep(280);
+    }
+
+    state.roundRates.push(100 * roundCooperations / roundDecisions);
+    renderChart(state.roundRates);
+    updateMetrics(state, round, settings.rounds);
+
+    setStatus(`Round ${round}/${settings.rounds} completed.`);
+    await sleep(280);
+  }
+
+  if (!isRunning) return;
+
+  setStatus("Step 3/4 — Running 100 seeded trials and the all-Defect baseline...");
+  await sleep(280);
+
+  const baselineStrategies = getDefectStrategies();
+  let totalCooperation = 0;
+  let totalPayoff = 0;
+  let baselineCooperation = 0;
+  let baselinePayoff = 0;
+
+  for (let seed = 1; seed <= 100; seed++) {
+    const trial = simulateInstant(
+      seed, settings.rounds, settings.noise, settings.model, strategies
+    );
+    const baseline = simulateInstant(
+      seed, settings.rounds, settings.noise, settings.model, baselineStrategies
+    );
+
+    totalCooperation += cooperationRate(trial);
+    totalPayoff += groupPayoff(trial);
+    baselineCooperation += cooperationRate(baseline);
+    baselinePayoff += groupPayoff(baseline);
+  }
+
+  experimentsRun += 100;
+  if ($("runs")) $("runs").textContent = "100";
+
+  const avgC = totalCooperation / 100;
+  const avgP = totalPayoff / 100;
+  const baseC = baselineCooperation / 100;
+  const baseP = baselinePayoff / 100;
+
+  renderValidationReports(settings);
+
+  if ($("summary")) {
+    $("summary").textContent =
+      `Step 4/4 — Completed ${settings.rounds} animated rounds and 100 seeded trials. ` +
+      `Configured strategies averaged ${avgC.toFixed(1)}% cooperation and ` +
+      `${avgP.toFixed(1)} total group payoff. The all-Defect baseline averaged ` +
+      `${baseC.toFixed(1)}% cooperation and ${baseP.toFixed(1)} total group payoff. ` +
+      `Difference versus baseline: ${(avgC - baseC).toFixed(1)} percentage points ` +
+      `in cooperation and ${(avgP - baseP).toFixed(1)} payoff. ` +
+      `These results apply only to the selected reward rules, noise level, and strategies.`;
+  }
+
+  setStatus("Experiment complete — all rounds and baseline comparison finished.");
+  isRunning = false;
+  if (runButton) runButton.disabled = false;
+}
+
+function resetExperiment() {
+  isRunning = false;
+  if (activeTimer !== null) clearTimeout(activeTimer);
+  activeTimer = null;
+
+  const runButton = $("runButton");
+  if (runButton) runButton.disabled = false;
+
+  experimentsRun = 0;
+  setStatus("Ready to run a new experiment.");
+
+  if ($("cooperation")) $("cooperation").textContent = "0%";
+  if ($("groupPayoff")) $("groupPayoff").textContent = "0";
+  if ($("completedRounds")) $("completedRounds").textContent = "0";
+  if ($("runs")) $("runs").textContent = "0";
+
+  if ($("agentResults")) {
+    $("agentResults").innerHTML =
+      '<tr><td colspan="4">Run an experiment to see agent results.</td></tr>';
+  }
+  if ($("history")) {
+    $("history").innerHTML =
+      '<tr><td colspan="5">Simulation history will appear here.</td></tr>';
+  }
+  if ($("summary")) {
+    $("summary").textContent = "Run an experiment to compare strategies with the baseline.";
+  }
+  if ($("validationResult")) $("validationResult").textContent = "Validation will run with the next experiment.";
+  if ($("caseResults")) $("caseResults").innerHTML = '<tr><td colspan="6" class="empty">Run the simulation to generate results for all three test cases.</td></tr>';
+  if ($("strategyResults")) $("strategyResults").innerHTML = '<tr><td colspan="5" class="empty">Run the simulation to compare strategy types over repeated seeded trials.</td></tr>';
+  if ($("limitationsReport")) $("limitationsReport").textContent = "Run the experiment to populate the validation report. Results are limited to the selected payoff model, strategy rules, round count, and noise settings.";
+
+  renderChart([]);
+}
+
+if ($("runButton")) $("runButton").addEventListener("click", runExperiment);
+if ($("resetButton")) $("resetButton").addEventListener("click", resetExperiment);
+
+let lastHardwareRound = 0;
+async function pollHardwareBridge() {
+  const status = $("wifiBridgeStatus");
+  try {
+    const response = await fetch("/api/state", { cache: "no-store" });
+    if (!response.ok) throw new Error("Bridge unavailable");
+    const state = await response.json();
+    if (status) {
+      status.innerHTML = '<span class="live-dot" style="background:#4ce0a0;box-shadow:0 0 12px #4ce0a0"></span>BRIDGE ONLINE';
+    }
+    const choices = state.pending || {};
+    const alpha = choices.A ? (choices.A === "C" ? "Cooperate" : "Defect") : "Waiting";
+    const beta = choices.B ? (choices.B === "C" ? "Cooperate" : "Defect") : "Waiting";
+    if ($("hardwareCurrentChoices")) $("hardwareCurrentChoices").textContent = `Current selections — Alpha: ${alpha}; Beta: ${beta}.`;
+    const rounds = Array.isArray(state.rounds) ? state.rounds : [];
+    if (rounds.length && rounds[rounds.length - 1].round !== lastHardwareRound) {
+      lastHardwareRound = rounds[rounds.length - 1].round;
+      if ($("hardwareRounds")) {
+        $("hardwareRounds").innerHTML = rounds.slice(-12).reverse().map(r => `<tr><td>${r.round}</td><td>${r.alpha === "C" ? "Cooperate" : "Defect"}</td><td>${r.beta === "C" ? "Cooperate" : "Defect"}</td><td>${r.alphaPayoff}</td><td>${r.betaPayoff}</td></tr>`).join("");
+      }
+    }
+  } catch (error) {
+    if (status) status.innerHTML = '<span class="live-dot" style="background:#ff7596;box-shadow:0 0 12px #ff7596"></span>BRIDGE OFFLINE';
+  }
+}
+setInterval(pollHardwareBridge, 1000);
+window.addEventListener("load", pollHardwareBridge);
+
+function setMode(mode) {
+  const demo = mode === "demo";
+  $("demoPanel").classList.toggle("active", demo);
+  $("esp32Panel").classList.toggle("active", !demo);
+  $("demoModeBtn").classList.toggle("active", demo);
+  $("esp32ModeBtn").classList.toggle("active", !demo);
+  $("demoModeBtn").setAttribute("aria-pressed", String(demo));
+  $("esp32ModeBtn").setAttribute("aria-pressed", String(!demo));
+  if (!demo) setStatus("ESP32 Mode is a preview. Hardware connection is not configured yet.");
+}
+$("demoModeBtn").addEventListener("click", () => setMode("demo"));
+$("esp32ModeBtn").addEventListener("click", () => setMode("esp32"));
+
+resetExperiment();
+// Automatically start the demo when the page loads, so results appear without a manual click.
+window.addEventListener("load", () => {
+  setMode("demo");
+  setTimeout(() => runExperiment(), 500);
+});
+</script>
+
+</body>
+</html>
